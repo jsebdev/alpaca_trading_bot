@@ -1,0 +1,5 @@
+ignored/
+
+.python-version
+
+.env
