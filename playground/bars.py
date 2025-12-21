@@ -19,5 +19,7 @@ request_params = CryptoBarsRequest(
 
 bars = client.get_crypto_bars(request_params)
 
-logger.debug('>>>>> bars.py:21 "bars"')
-logger.debug(bars)
+# %%
+
+# type(bars)
+bars.keys()
