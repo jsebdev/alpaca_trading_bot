@@ -30,13 +30,6 @@ from strategies import BaseStrategy, SimpleGapDownStrategy, TradeSignal
 
 
 class DayTradingBot:
-    """
-    Day trading bot that executes trades at market open.
-
-    The bot uses an injectable strategy pattern, allowing different
-    trading strategies to be swapped without modifying the bot logic.
-    """
-
     def __init__(
         self,
         config: Config,
@@ -92,7 +85,6 @@ class DayTradingBot:
         self.logger.info("=" * 60)
 
         try:
-            # Step 1: Check account and get available cash
             if not self.alpaca_client.is_tradeable():
                 self.logger.error("Account is not tradeable. Exiting.")
                 return []
