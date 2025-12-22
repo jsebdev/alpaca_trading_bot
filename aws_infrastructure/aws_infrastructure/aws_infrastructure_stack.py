@@ -1,37 +1,125 @@
+import os
 from aws_cdk import (
     CfnOutput,
+    Duration,
     Stack,
     aws_lambda as _lambda,
+    aws_events as events,
+    aws_events_targets as targets,
 )
 from constructs import Construct
 
+
 class AwsInfrastructureStack(Stack):
+    """
+    CDK Stack for Alpaca Trading Bot deployed to AWS Lambda.
+
+    This stack creates:
+    - Lambda Layer with dependencies (alpaca-py, pandas, numpy)
+    - Lambda Function with trading bot code
+    - EventBridge Rules for scheduled execution (9:30 AM ET, Mon-Fri)
+    - CloudWatch Logs integration
+    """
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Define the Lambda function resource
-        my_function = _lambda.Function(
+        # Validate Alpaca credentials are provided
+        alpaca_key = os.environ.get("ALPACA_API_KEY")
+        alpaca_secret = os.environ.get("ALPACA_API_SECRET")
+
+        if not alpaca_key or not alpaca_secret:
+            raise ValueError(
+                "ALPACA_API_KEY and ALPACA_API_SECRET environment variables must be set. "
+                "Export them before running 'cdk deploy'."
+            )
+
+        # Create Lambda Layer for dependencies
+        dependencies_layer = _lambda.LayerVersion(
             self,
-            "HelloWorldFunction",
-            runtime=_lambda.Runtime.NODEJS_20_X,  # Provide any supported Node.js runtime
-            handler="index.handler",
-            code=_lambda.Code.from_inline(
-                """
-            exports.handler = async function(event) {
-              return {
-                statusCode: 200,
-                body: JSON.stringify('Hello World!'),
-              };
-            };
-            """
+            "TradingBotDependencies",
+            code=_lambda.Code.from_asset("layers"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            description="Alpaca trading bot dependencies (alpaca-py, pandas, numpy)",
+        )
+
+        # Define Lambda function
+        trading_bot_function = _lambda.Function(
+            self,
+            "AlpacaTradingBot",
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("lambda"),
+            layers=[dependencies_layer],
+            timeout=Duration.seconds(60),
+            memory_size=512,
+            environment={
+                # Alpaca Credentials
+                "ALPACA_API_KEY": alpaca_key,
+                "ALPACA_API_SECRET": alpaca_secret,
+                "PAPER_TRADING": "true",
+                # Trading Parameters
+                "CASH_ALLOCATION_PERCENT": os.environ.get(
+                    "CASH_ALLOCATION_PERCENT", "0.05"
+                ),
+                "LOOKBACK_DAYS": os.environ.get("LOOKBACK_DAYS", "5"),
+                # Bot Control
+                "DRY_RUN": os.environ.get("DRY_RUN", "true"),
+                "WATCHLIST": os.environ.get(
+                    "WATCHLIST", "AAPL,MSFT,GOOGL,AMZN,TSLA"
+                ),
+            },
+            description="Alpaca paper trading bot with gap-down strategy",
+        )
+
+        # Create EventBridge rule for scheduling (9:30 AM EST, Mon-Fri)
+        # EST (winter): 9:30 AM EST = 14:30 UTC
+        rule_est = events.Rule(
+            self,
+            "TradingBotScheduleEST",
+            schedule=events.Schedule.cron(
+                minute="30",
+                hour="14",  # 9:30 AM EST = 14:30 UTC
+                month="1,2,3,11,12",  # EST months (Nov-Mar)
+                week_day="MON-FRI",
             ),
+            description="Trigger trading bot at 9:30 AM EST (Nov-Mar)",
+        )
+        rule_est.add_target(targets.LambdaFunction(trading_bot_function))
+
+        # Create EventBridge rule for scheduling (9:30 AM EDT, Mon-Fri)
+        # EDT (summer): 9:30 AM EDT = 13:30 UTC
+        rule_edt = events.Rule(
+            self,
+            "TradingBotScheduleEDT",
+            schedule=events.Schedule.cron(
+                minute="30",
+                hour="13",  # 9:30 AM EDT = 13:30 UTC
+                month="4-10",  # EDT months (Apr-Oct)
+                week_day="MON-FRI",
+            ),
+            description="Trigger trading bot at 9:30 AM EDT (Apr-Oct)",
+        )
+        rule_edt.add_target(targets.LambdaFunction(trading_bot_function))
+
+        # CloudFormation outputs
+        CfnOutput(
+            self,
+            "TradingBotFunctionName",
+            value=trading_bot_function.function_name,
+            description="Lambda function name for the trading bot",
         )
 
-        # Define the Lambda function URL resource
-        my_function_url = my_function.add_function_url(
-          auth_type = _lambda.FunctionUrlAuthType.NONE,
+        CfnOutput(
+            self,
+            "TradingBotFunctionArn",
+            value=trading_bot_function.function_arn,
+            description="Lambda function ARN",
         )
 
-        # Define a CloudFormation output for your URL
-        CfnOutput(self, "myFunctionUrlOutput", value=my_function_url.url)
+        CfnOutput(
+            self,
+            "LogGroup",
+            value=f"/aws/lambda/{trading_bot_function.function_name}",
+            description="CloudWatch Logs group name for viewing bot execution logs",
+        )
