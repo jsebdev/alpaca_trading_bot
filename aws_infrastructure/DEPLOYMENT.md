@@ -4,8 +4,7 @@ This guide walks you through deploying the Alpaca trading bot to AWS Lambda with
 
 ## Architecture Overview
 
-- **Lambda Function**: Python 3.12 runtime hosting your trading bot
-- **Lambda Layer**: Dependencies (alpaca-py, python-dotenv)
+- **Lambda Function**: Python 3.12 runtime hosting your trading bot (dependencies bundled automatically)
 - **EventBridge Rules**: Triggers Lambda at 9:30 AM ET, Monday-Friday
 - **CloudWatch Logs**: Automatic logging of all bot executions
 
@@ -39,7 +38,7 @@ export ALPACA_API_SECRET="your_alpaca_secret"
 
 ### 4. Install Docker
 
-Docker is required to build the Lambda layer with correct binary dependencies.
+Docker is required for CDK to automatically bundle dependencies with correct binary compatibility for Lambda.
 
 ```bash
 # Verify Docker is running
@@ -57,26 +56,10 @@ Replace `YOUR_ACCOUNT_ID` with your AWS account ID (can find with `aws sts get-c
 
 ## Build and Deploy
 
-### Step 1: Build Lambda Layer
+### Step 1: Prepare Bot Code
 
 ```bash
 cd aws_infrastructure
-./build_layer.sh
-```
-
-This creates `layers/python/lib/python3.12/site-packages/` with all dependencies (~150 MB).
-
-**Expected output**:
-```
-Building Lambda Layer for trading bot dependencies...
-Installing dependencies using Docker...
-Lambda layer built successfully!
-Total layer size: 150M
-```
-
-### Step 2: Prepare Bot Code
-
-```bash
 ./prepare_lambda.sh
 ```
 
@@ -89,15 +72,7 @@ Total Python files copied: 11
 Bot package prepared successfully!
 ```
 
-### Step 3: Synthesize CDK Stack
-
-```bash
-cdk synth
-```
-
-This generates CloudFormation template in `cdk.out/`.
-
-### Step 4: Preview Changes
+### Step 2: Preview Changes (Optional)
 
 ```bash
 cdk diff
@@ -105,11 +80,16 @@ cdk diff
 
 This shows what will be created/modified/deleted.
 
-### Step 5: Deploy to AWS
+### Step 3: Deploy to AWS
 
 ```bash
 cdk deploy
 ```
+
+CDK will automatically:
+1. Use Docker to build dependencies from `lambda/requirements.txt`
+2. Bundle dependencies with your bot code
+3. Deploy everything to Lambda with correct Linux binaries
 
 Or with auto-approval (for CI/CD):
 ```bash
@@ -125,6 +105,8 @@ AwsInfrastructureStack.TradingBotFunctionName = AwsInfrastructureStack-AlpacaTra
 AwsInfrastructureStack.TradingBotFunctionArn = arn:aws:lambda:us-east-1:...
 AwsInfrastructureStack.LogGroup = /aws/lambda/AwsInfrastructureStack-AlpacaTradingBot...
 ```
+
+**Note**: First deployment may take 2-3 minutes as Docker builds dependencies. Subsequent deployments are faster (~30 seconds).
 
 ## Testing
 
@@ -322,16 +304,25 @@ cd aws_infrastructure
 # Re-prepare bot code
 ./prepare_lambda.sh
 
-# Re-deploy (dependencies layer not rebuilt)
+# Re-deploy
 cdk deploy
 ```
 
-This is fast (~30 seconds) because the Lambda layer doesn't need to be rebuilt.
+This is fast (~30 seconds) because CDK caches dependencies and only rebuilds if `requirements.txt` changes.
+
+### Updating Dependencies
+
+If you need to add or update Python dependencies:
+
+1. Edit `lambda/requirements.txt`
+2. Run `cdk deploy`
+
+CDK will automatically rebuild dependencies in Docker and redeploy.
 
 ## Cost Estimate
 
 - **Lambda Function**: $0.00 (free tier: 1M requests/month)
-- **Lambda Layer Storage**: ~$0.02/month
+- **Lambda Storage**: ~$0.02/month (code + dependencies)
 - **EventBridge**: $0.00 (free tier: 1M events/month)
 - **CloudWatch Logs**: ~$0.03/month
 
@@ -353,7 +344,7 @@ ERROR: ModuleNotFoundError: No module named 'bots'
 ERROR: No module named 'alpaca'
 ```
 
-**Solution**: Run `./build_layer.sh` to rebuild the Lambda layer.
+**Solution**: Ensure `lambda/requirements.txt` includes all required dependencies, then run `cdk deploy` to rebuild.
 
 ### Alpaca API Errors
 
@@ -368,26 +359,18 @@ aws lambda get-function-configuration \
   --query 'Environment.Variables'
 ```
 
-### Docker Not Available
+### Binary Compatibility Issues
 
-If Docker is not available for building the layer, use pip with --platform:
-
-```bash
-mkdir -p layers/python/lib/python3.12/site-packages
-
-pip install \
-  alpaca-py==0.43.2 \
-  python-dotenv==1.1.0 \
-  pandas==2.3.3 \
-  numpy==2.3.5 \
-  sseclient-py==1.8.0 \
-  websockets==15.0.1 \
-  --platform manylinux2014_x86_64 \
-  --only-binary=:all: \
-  -t layers/python/lib/python3.12/site-packages
+```
+ERROR: Unable to import module 'handler': No module named 'pydantic_core._pydantic_core'
 ```
 
-Note: This may not work for all dependencies (numpy, pandas) on some systems.
+**Cause**: Dependencies were built for the wrong platform (e.g., macOS instead of Linux).
+
+**Solution**: This should not happen with CDK's automatic bundling, which uses Docker to build for the correct Lambda runtime. Ensure:
+1. Docker is installed and running
+2. Run `cdk deploy` (not manual pip installs)
+3. CDK will automatically build dependencies for Linux x86_64
 
 ### Timeout Errors
 
@@ -410,8 +393,7 @@ cdk destroy
 ```
 
 This deletes:
-- Lambda function
-- Lambda layer
+- Lambda function (including bundled dependencies)
 - EventBridge rules
 - IAM roles
 

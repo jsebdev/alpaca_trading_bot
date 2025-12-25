@@ -15,8 +15,7 @@ class AwsInfrastructureStack(Stack):
     CDK Stack for Alpaca Trading Bot deployed to AWS Lambda.
 
     This stack creates:
-    - Lambda Layer with dependencies (alpaca-py)
-    - Lambda Function with trading bot code
+    - Lambda Function with trading bot code (dependencies bundled automatically via Docker)
     - EventBridge Rules for scheduled execution
     - CloudWatch Logs integration
     """
@@ -34,23 +33,22 @@ class AwsInfrastructureStack(Stack):
                 "Export them before running 'cdk deploy'."
             )
 
-        # Create Lambda Layer for dependencies
-        dependencies_layer = _lambda.LayerVersion(
-            self,
-            "TradingBotDependencies",
-            code=_lambda.Code.from_asset("layers"),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
-            description="Alpaca trading bot dependencies (alpaca-py, pandas, numpy)",
-        )
-
-        # Define Lambda function
+        # Define Lambda function with automatic dependency bundling
         trading_bot_function = _lambda.Function(
             self,
             "AlpacaTradingBot",
             runtime=_lambda.Runtime.PYTHON_3_12,
             handler="handler.lambda_handler",
-            code=_lambda.Code.from_asset("lambda"),
-            layers=[dependencies_layer],
+            code=_lambda.Code.from_asset(
+                "lambda",
+                bundling={
+                    "image": _lambda.Runtime.PYTHON_3_12.bundling_image,
+                    "command": [
+                        "bash", "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output"
+                    ],
+                }
+            ),
             timeout=Duration.seconds(60),
             memory_size=512,
             environment={

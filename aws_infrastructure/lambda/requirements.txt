@@ -1,0 +1,4 @@
+alpaca-py==0.43.2
+python-dotenv==1.1.0
+sseclient-py==1.8.0
+websockets==15.0.1
