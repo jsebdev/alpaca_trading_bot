@@ -15,9 +15,9 @@ class AwsInfrastructureStack(Stack):
     CDK Stack for Alpaca Trading Bot deployed to AWS Lambda.
 
     This stack creates:
-    - Lambda Layer with dependencies (alpaca-py, pandas, numpy)
+    - Lambda Layer with dependencies (alpaca-py)
     - Lambda Function with trading bot code
-    - EventBridge Rules for scheduled execution (9:30 AM ET, Mon-Fri)
+    - EventBridge Rules for scheduled execution
     - CloudWatch Logs integration
     """
 

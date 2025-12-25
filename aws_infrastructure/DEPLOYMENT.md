@@ -5,7 +5,7 @@ This guide walks you through deploying the Alpaca trading bot to AWS Lambda with
 ## Architecture Overview
 
 - **Lambda Function**: Python 3.12 runtime hosting your trading bot
-- **Lambda Layer**: Dependencies (alpaca-py, pandas, numpy, python-dotenv)
+- **Lambda Layer**: Dependencies (alpaca-py, python-dotenv)
 - **EventBridge Rules**: Triggers Lambda at 9:30 AM ET, Monday-Friday
 - **CloudWatch Logs**: Automatic logging of all bot executions
 

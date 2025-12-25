@@ -15,14 +15,13 @@ mkdir -p layers/python/lib/python3.12/site-packages
 # This ensures binary compatibility with AWS Lambda runtime
 echo "Installing dependencies using Docker..."
 docker run --rm \
+  --entrypoint "" \
   -v "$(pwd)/layers:/layers" \
   -w /layers \
   public.ecr.aws/lambda/python:3.12 \
   pip install \
     alpaca-py==0.43.2 \
     python-dotenv==1.1.0 \
-    pandas==2.3.3 \
-    numpy==2.3.5 \
     sseclient-py==1.8.0 \
     websockets==15.0.1 \
     -t /layers/python/lib/python3.12/site-packages \
