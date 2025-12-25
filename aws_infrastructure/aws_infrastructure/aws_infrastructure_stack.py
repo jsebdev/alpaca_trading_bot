@@ -49,6 +49,7 @@ class AwsInfrastructureStack(Stack):
                     ],
                 }
             ),
+            architecture=_lambda.Architecture.ARM_64,  # Use ARM64 (Graviton2) - 20% cheaper and matches Mac builds
             timeout=Duration.seconds(60),
             memory_size=512,
             environment={
