@@ -9,6 +9,7 @@ Main orchestration script that:
 5. Places trades based on strategy signals
 """
 
+import os
 import sys
 import logging
 from typing import List, Optional
@@ -177,10 +178,13 @@ def main(dry_run: bool = False, watchlist: Optional[List[str]] = None):
         watchlist: Optional custom watchlist. If None, uses default from config.
     """
     # Setup logger
+    # In Lambda, skip file logging (CloudWatch captures stdout automatically)
+    # Otherwise, log to file for local debugging
+    log_file = None if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "day_bot.log"
     logger = setup_logger(
         name="day_bot",
         level=logging.INFO,
-        log_file="day_bot.log",
+        log_file=log_file,
     )
 
     try:
