@@ -14,7 +14,7 @@ from typing import List, Dict, Any, Optional
 from dataclasses import asdict
 
 # Add bot_package to Python path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "bot_package"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 # Import bot after path modification
 from bots.day_bot import main as run_bot
