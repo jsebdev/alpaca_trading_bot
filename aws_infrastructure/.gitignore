@@ -9,6 +9,7 @@ __pycache__
 .cdk.staging
 cdk.out
 
-# Generated Lambda artifacts
+# Generated Lambda artifacts (CDK handles bundling automatically)
+# Keeping these for backwards compatibility in case old build artifacts exist
 layers/
-lambda/bot_package/
+lambda/

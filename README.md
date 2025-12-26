@@ -7,7 +7,7 @@ A modular, production-ready trading bot for Alpaca paper trading with injectable
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         USER INTERACTION                          │
-│  python bots/day_bot.py --dry-run --symbols AAPL MSFT GOOGL     │
+│  python src/bots/day_bot.py --dry-run --symbols AAPL MSFT GOOGL │
 └───────────────────────────────┬─────────────────────────────────┘
                                 │
                                 ▼
@@ -42,24 +42,29 @@ A modular, production-ready trading bot for Alpaca paper trading with injectable
 ## Architecture at a Glance
 
 ```
-LAYER 1: Entry Point
-├── bots/day_bot.py ..................... Main bot orchestration & CLI
+src/                                     # All source code
+├── LAYER 1: Entry Point
+│   └── bots/day_bot.py ................. Main bot orchestration & CLI
+│
+├── LAYER 2: Business Logic
+│   └── strategies/
+│       ├── base_strategy.py ............ Abstract strategy interface
+│       └── simple_strategy.py .......... Gap-down strategy
+│
+├── LAYER 3: Utilities
+│   └── utils/
+│       ├── config.py ................... Environment & configuration
+│       ├── logger.py ................... Logging setup
+│       ├── alpaca_client.py ............ Alpaca API wrapper
+│       ├── market_data.py .............. Market data operations
+│       └── order_manager.py ............ Order placement & tracking
+│
+├── LAYER 4: Lambda Handler
+│   └── lambda/handler.py ............... AWS Lambda entry point
+│
+└── requirements.txt .................... Python dependencies
 
-LAYER 2: Business Logic
-├── strategies/
-│   ├── base_strategy.py ................ Abstract strategy interface
-│   └── simple_strategy.py .............. Gap-down strategy
-
-LAYER 3: Utilities
-├── utils/
-│   ├── config.py ....................... Environment & configuration
-│   ├── logger.py ....................... Logging setup
-│   ├── alpaca_client.py ................ Alpaca API wrapper
-│   ├── market_data.py .................. Market data operations
-│   └── order_manager.py ................ Order placement & tracking
-
-LAYER 4: Examples
-└── example_custom_strategy.py .......... Custom strategy examples
+example_custom_strategy.py .............. Custom strategy examples (project root)
 ```
 
 ## How It Works: Simple Gap-Down Strategy
@@ -133,17 +138,17 @@ bot = DayTradingBot(config, strategy, logger)
 
 ### Run in Dry-Run Mode (Recommended)
 ```bash
-python bots/day_bot.py --dry-run
+python src/bots/day_bot.py --dry-run
 ```
 
 ### Run with Live Paper Trading
 ```bash
-python bots/day_bot.py
+python src/bots/day_bot.py
 ```
 
 ### Custom Watchlist
 ```bash
-python bots/day_bot.py --dry-run --symbols AAPL TSLA NVDA AMD
+python src/bots/day_bot.py --dry-run --symbols AAPL TSLA NVDA AMD
 ```
 
 ## Output Example
@@ -231,7 +236,7 @@ LOOKBACK_DAYS=5
 See `example_custom_strategy.py` for complete examples. Basic structure:
 
 ```python
-from strategies import BaseStrategy, TradeSignal
+from src.strategies import BaseStrategy, TradeSignal
 
 class MyCustomStrategy(BaseStrategy):
     def get_name(self) -> str:

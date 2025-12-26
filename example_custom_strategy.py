@@ -6,10 +6,10 @@ to create new strategies and swap them in the bot.
 """
 
 import logging
-from strategies import BaseStrategy, TradeSignal
-from utils.market_data import MarketDataFetcher
-from bots.day_bot import main
-from utils import setup_logger
+from src.strategies import BaseStrategy, TradeSignal
+from src.utils.market_data import MarketDataFetcher
+from src.bots.day_bot import main
+from src.utils import setup_logger
 
 
 class MomentumStrategy(BaseStrategy):

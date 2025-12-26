@@ -23,17 +23,17 @@ The environment is defined in `environment.yml` with core dependencies:
 
 ### Dry-run mode (logs signals without placing orders):
 ```bash
-python bots/day_bot.py --dry-run
+python src/bots/day_bot.py --dry-run
 ```
 
 ### Live paper trading:
 ```bash
-python bots/day_bot.py
+python src/bots/day_bot.py
 ```
 
 ### Custom watchlist:
 ```bash
-python bots/day_bot.py --dry-run --symbols AAPL TSLA NVDA AMD
+python src/bots/day_bot.py --dry-run --symbols AAPL TSLA NVDA AMD
 ```
 
 ## Configuration
@@ -50,20 +50,23 @@ The bot requires a `.env` file in the project root with:
 The system follows a **Strategy Pattern** design where trading strategies are injected into the bot:
 
 ### Entry Point
-- `bots/day_bot.py` - Main orchestration & CLI. Contains `DayTradingBot` class that coordinates all components.
+- `src/bots/day_bot.py` - Main orchestration & CLI. Contains `DayTradingBot` class that coordinates all components.
 
 ### Strategy Layer (Business Logic)
-- `strategies/base_strategy.py` - Abstract `BaseStrategy` class defining the interface all strategies must implement
-- `strategies/simple_strategy.py` - Concrete `SimpleGapDownStrategy` implementation
+- `src/strategies/base_strategy.py` - Abstract `BaseStrategy` class defining the interface all strategies must implement
+- `src/strategies/simple_strategy.py` - Concrete `SimpleGapDownStrategy` implementation
 
 **Key pattern**: Strategies return `TradeSignal` objects that encapsulate whether to trade, position size, and bracket order prices (TP/SL). The bot executes these signals without knowing the strategy logic.
 
 ### Utilities Layer
-- `utils/config.py` - Loads and validates configuration from `.env`
-- `utils/alpaca_client.py` - `AlpacaClientWrapper` facade for Alpaca API (trading & data clients)
-- `utils/market_data.py` - `MarketDataFetcher` for historical bars, gap analysis, candle calculations
-- `utils/order_manager.py` - `OrderManager` for bracket and market order placement
-- `utils/logger.py` - Logging setup (console + file)
+- `src/utils/config.py` - Loads and validates configuration from `.env`
+- `src/utils/alpaca_client.py` - `AlpacaClientWrapper` facade for Alpaca API (trading & data clients)
+- `src/utils/market_data.py` - `MarketDataFetcher` for historical bars, gap analysis, candle calculations
+- `src/utils/order_manager.py` - `OrderManager` for bracket and market order placement
+- `src/utils/logger.py` - Logging setup (console + file)
+
+### Lambda Handler
+- `src/lambda/handler.py` - AWS Lambda entry point for scheduled cloud execution
 
 ### Dependency Flow
 ```
@@ -106,7 +109,7 @@ See `example_custom_strategy.py` for complete examples. All strategies must:
 - Take profit and stop loss prices are optional but recommended for risk management
 
 ### Injecting a Custom Strategy
-In `bots/day_bot.py` main() function (around line 192), replace:
+In `src/bots/day_bot.py` main() function (around line 192), replace:
 ```python
 strategy = SimpleGapDownStrategy(...)
 ```
@@ -123,7 +126,7 @@ The bot primarily uses bracket orders which include:
 - Take profit limit order (exit at profit target)
 - Stop loss order (exit to limit losses)
 
-See `utils/order_manager.py:BracketOrderParams` for the data structure.
+See `src/utils/order_manager.py:BracketOrderParams` for the data structure.
 
 ### Gap-Down Strategy Logic
 The default `SimpleGapDownStrategy`:
@@ -139,10 +142,10 @@ The bot tracks remaining cash across the watchlist evaluation loop (`evaluate_wa
 ## Important Files to Read First
 
 When modifying the system, read these in order:
-1. `strategies/base_strategy.py` - Understand the strategy interface and `TradeSignal`
-2. `bots/day_bot.py` - See how the bot orchestrates everything
-3. `utils/market_data.py` - Understand data fetching capabilities
-4. `strategies/simple_strategy.py` - See a complete strategy implementation
+1. `src/strategies/base_strategy.py` - Understand the strategy interface and `TradeSignal`
+2. `src/bots/day_bot.py` - See how the bot orchestrates everything
+3. `src/utils/market_data.py` - Understand data fetching capabilities
+4. `src/strategies/simple_strategy.py` - See a complete strategy implementation
 
 ## Architectural Diagrams
 
@@ -165,11 +168,11 @@ Refer to these diagrams when planning significant changes to understand the full
 
 ## AWS Lambda Deployment
 
-The bot can be deployed to AWS Lambda for scheduled execution:
-1. Package code + conda dependencies into Lambda layer
-2. Set environment variables for Alpaca credentials
-3. Create EventBridge rule for scheduling (e.g., 9:30 AM ET weekdays)
-4. Handler example in `ARCHITECTURE.md` line 360-368
+The bot can be deployed to AWS Lambda for scheduled execution using AWS CDK:
+1. All source code is in `src/` directory (including the Lambda handler at `src/lambda/handler.py`)
+2. CDK automatically bundles dependencies from `src/requirements.txt` using Docker
+3. EventBridge rules trigger execution at 9:30 AM ET on weekdays
+4. See `aws_infrastructure/DEPLOYMENT.md` for complete deployment instructions
 
 ## Code Style Notes
 

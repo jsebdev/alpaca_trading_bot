@@ -280,22 +280,33 @@ flowchart LR
 ```
 trading-bot/
 │
-├── bots/
-│   ├── __init__.py
-│   └── day_bot.py                    # Main orchestration & CLI
+├── src/                              # All source code
+│   ├── bots/
+│   │   ├── __init__.py
+│   │   └── day_bot.py                # Main orchestration & CLI
+│   │
+│   ├── strategies/
+│   │   ├── __init__.py
+│   │   ├── base_strategy.py          # Abstract strategy interface
+│   │   └── simple_strategy.py        # Gap-down implementation
+│   │
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── config.py                 # Configuration management
+│   │   ├── logger.py                 # Logging setup
+│   │   ├── alpaca_client.py          # API client wrapper
+│   │   ├── market_data.py            # Market data utilities
+│   │   └── order_manager.py          # Order placement
+│   │
+│   ├── lambda/
+│   │   └── handler.py                # AWS Lambda entry point
+│   │
+│   └── requirements.txt              # Python dependencies
 │
-├── strategies/
-│   ├── __init__.py
-│   ├── base_strategy.py              # Abstract strategy interface
-│   └── simple_strategy.py            # Gap-down implementation
-│
-├── utils/
-│   ├── __init__.py
-│   ├── config.py                     # Configuration management
-│   ├── logger.py                     # Logging setup
-│   ├── alpaca_client.py              # API client wrapper
-│   ├── market_data.py                # Market data utilities
-│   └── order_manager.py              # Order placement
+├── aws_infrastructure/               # AWS CDK deployment
+│   ├── app.py                        # CDK app entry point
+│   └── aws_infrastructure/
+│       └── aws_infrastructure_stack.py
 │
 ├── example_custom_strategy.py        # Strategy examples
 ├── .env                              # API credentials

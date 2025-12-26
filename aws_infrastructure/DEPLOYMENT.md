@@ -56,40 +56,26 @@ Replace `YOUR_ACCOUNT_ID` with your AWS account ID (can find with `aws sts get-c
 
 ## Build and Deploy
 
-### Step 1: Prepare Bot Code
+### Step 1: Preview Changes (Optional)
 
 ```bash
 cd aws_infrastructure
-./prepare_lambda.sh
-```
-
-This copies `bots/`, `strategies/`, and `utils/` to `lambda/bot_package/`.
-
-**Expected output**:
-```
-Preparing bot code for Lambda deployment...
-Total Python files copied: 11
-Bot package prepared successfully!
-```
-
-### Step 2: Preview Changes (Optional)
-
-```bash
 cdk diff
 ```
 
 This shows what will be created/modified/deleted.
 
-### Step 3: Deploy to AWS
+### Step 2: Deploy to AWS
 
 ```bash
 cdk deploy
 ```
 
 CDK will automatically:
-1. Use Docker to build dependencies from `lambda/requirements.txt`
-2. Bundle dependencies with your bot code
-3. Deploy everything to Lambda with correct Linux binaries
+1. Package all source code from `../src/` directory
+2. Use Docker to build dependencies from `src/requirements.txt`
+3. Bundle everything together
+4. Deploy to Lambda with correct Linux ARM64 binaries
 
 Or with auto-approval (for CI/CD):
 ```bash
@@ -296,26 +282,21 @@ aws events enable-rule --name AwsInfrastructureStack-TradingBotScheduleEDT...
 
 ## Updating the Bot Code
 
-When you modify the bot logic in `bots/`, `strategies/`, or `utils/`:
+When you modify the bot logic in `src/bots/`, `src/strategies/`, or `src/utils/`:
 
 ```bash
 cd aws_infrastructure
-
-# Re-prepare bot code
-./prepare_lambda.sh
-
-# Re-deploy
 cdk deploy
 ```
 
-This is fast (~30 seconds) because CDK caches dependencies and only rebuilds if `requirements.txt` changes.
+This is fast (~30 seconds) because CDK caches dependencies and only rebuilds if `src/requirements.txt` changes.
 
 ### Updating Dependencies
 
 If you need to add or update Python dependencies:
 
-1. Edit `lambda/requirements.txt`
-2. Run `cdk deploy`
+1. Edit `src/requirements.txt`
+2. Run `cdk deploy` from `aws_infrastructure/` directory
 
 CDK will automatically rebuild dependencies in Docker and redeploy.
 
@@ -336,7 +317,7 @@ CDK will automatically rebuild dependencies in Docker and redeploy.
 ERROR: ModuleNotFoundError: No module named 'bots'
 ```
 
-**Solution**: Run `./prepare_lambda.sh` to copy bot code.
+**Solution**: Ensure the `src/` directory structure is correct and run `cdk deploy` to redeploy.
 
 ### Missing Dependencies
 
@@ -344,7 +325,7 @@ ERROR: ModuleNotFoundError: No module named 'bots'
 ERROR: No module named 'alpaca'
 ```
 
-**Solution**: Ensure `lambda/requirements.txt` includes all required dependencies, then run `cdk deploy` to rebuild.
+**Solution**: Ensure `src/requirements.txt` includes all required dependencies, then run `cdk deploy` to rebuild.
 
 ### Alpaca API Errors
 
@@ -416,4 +397,4 @@ For issues or questions:
 - Check CloudWatch Logs for detailed error messages
 - Review the CDK stack in AWS Console → CloudFormation
 - Verify environment variables in Lambda console
-- Test locally first: `python bots/day_bot.py --dry-run`
+- Test locally first: `python src/bots/day_bot.py --dry-run`
