@@ -222,7 +222,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Day trading bot")
     parser.add_argument(
         "--dry-run",
-        action="store_true",
+        action="store_false",
         help="Simulate trades without placing real orders",
     )
     parser.add_argument(

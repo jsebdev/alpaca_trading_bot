@@ -225,7 +225,7 @@ class MarketDataFetcher:
         Raises:
             APIError: If the API request fails
         """
-        candles = self.get_historical_bars(symbol, days=2)
+        candles = self.get_historical_bars(symbol, days=4)
 
         if len(candles) < 2:
             return None

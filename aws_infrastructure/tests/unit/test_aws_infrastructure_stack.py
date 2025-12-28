@@ -1,13 +1,13 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from aws_infrastructure.aws_infrastructure_stack import AwsInfrastructureStack
+from aws_infrastructure.aws_infrastructure_stack import TradingBotStack
 
 # example tests. To run these tests, uncomment this file along with the example
 # resource in aws_infrastructure/aws_infrastructure_stack.py
 def test_sqs_queue_created():
     app = core.App()
-    stack = AwsInfrastructureStack(app, "aws-infrastructure")
+    stack = TradingBotStack(app, "aws-infrastructure")
     template = assertions.Template.from_stack(stack)
 
 #     template.has_resource_properties("AWS::SQS::Queue", {

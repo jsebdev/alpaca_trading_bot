@@ -10,20 +10,10 @@ from aws_cdk import (
 from constructs import Construct
 
 
-class TradingBotStack(Stack):
-    """
-    CDK Stack for Alpaca Trading Bot deployed to AWS Lambda.
-
-    This stack creates:
-    - Lambda Function with trading bot code (dependencies bundled automatically via Docker)
-    - EventBridge Rules for scheduled execution
-    - CloudWatch Logs integration
-    """
-
+class ToyStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Validate Alpaca credentials are provided
         alpaca_key = os.environ.get("ALPACA_API_KEY")
         alpaca_secret = os.environ.get("ALPACA_API_SECRET")
 
@@ -33,12 +23,11 @@ class TradingBotStack(Stack):
                 "Export them before running 'cdk deploy'."
             )
 
-        # Define Lambda function with automatic dependency bundling
-        trading_bot_function = _lambda.Function(
+        toy_lambda_function = _lambda.Function(
             self,
-            "AlpacaTradingBot",
+            "ToyLambdaFunction",
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="lambda.handler.lambda_handler",
+            handler="lambda.toy_handler.toy_handler",
             code=_lambda.Code.from_asset(
                 "../src/",
                 bundling={
@@ -67,58 +56,29 @@ class TradingBotStack(Stack):
                 "WATCHLIST": os.environ.get(
                     "WATCHLIST", "AAPL,MSFT,GOOGL,AMZN,TSLA"
                 ),
+                "TEST_VARIABLE": os.environ.get("TEST_VARIABLE", "paila"),
             },
             description="Alpaca paper trading bot with gap-down strategy",
         )
 
-        # Create EventBridge rule for scheduling (9:30 AM EST, Mon-Fri)
-        # EST (winter): 9:30 AM EST = 14:30 UTC
-        rule_est = events.Rule(
-            self,
-            "TradingBotScheduleEST",
-            schedule=events.Schedule.cron(
-                minute="30",
-                hour="14",  # 9:30 AM EST = 14:30 UTC
-                month="1,2,3,11,12",  # EST months (Nov-Mar)
-                week_day="MON-FRI",
-            ),
-            description="Trigger trading bot at 9:30 AM EST (Nov-Mar)",
-        )
-        rule_est.add_target(targets.LambdaFunction(trading_bot_function))
-
-        # Create EventBridge rule for scheduling (9:30 AM EDT, Mon-Fri)
-        # EDT (summer): 9:30 AM EDT = 13:30 UTC
-        rule_edt = events.Rule(
-            self,
-            "TradingBotScheduleEDT",
-            schedule=events.Schedule.cron(
-                minute="30",
-                hour="13",  # 9:30 AM EDT = 13:30 UTC
-                month="4-10",  # EDT months (Apr-Oct)
-                week_day="MON-FRI",
-            ),
-            description="Trigger trading bot at 9:30 AM EDT (Apr-Oct)",
-        )
-        rule_edt.add_target(targets.LambdaFunction(trading_bot_function))
-
         # CloudFormation outputs
         CfnOutput(
             self,
-            "TradingBotFunctionName",
-            value=trading_bot_function.function_name,
-            description="Lambda function name for the trading bot",
+            "ToyLambdaFunctionName",
+            value=toy_lambda_function.function_name,
+            description="Lambda function name",
         )
 
         CfnOutput(
             self,
-            "TradingBotFunctionArn",
-            value=trading_bot_function.function_arn,
+            "ToyLambdaFunctionARN",
+            value=toy_lambda_function.function_arn,
             description="Lambda function ARN",
         )
 
         CfnOutput(
             self,
             "LogGroup",
-            value=f"/aws/lambda/{trading_bot_function.function_name}",
-            description="CloudWatch Logs group name for viewing bot execution logs",
+            value=f"/aws/lambda/{toy_lambda_function.function_name}",
+            description="CloudWatch Log Group Name",
         )
