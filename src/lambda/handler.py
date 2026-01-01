@@ -23,8 +23,12 @@ from strategies.base_strategy import TradeSignal
 from utils.logger import setup_logger
 
 logging.basicConfig(level=logging.DEBUG) # this only works in local, lambda already has a handler attached to root logger
-logging.getLogger().setLevel(logging.DEBUG) # set root logger level to INFO in lambda, by default it's WARNING
+logging.getLogger().setLevel(logging.DEBUG) # set root logger level in lambda, by default it's WARNING
 logger = logging.getLogger(__name__)
+
+# default lambda logging format: '[%(levelname)s] %(asctime)s.%(msecs)03dZ %(aws_request_id)s %(message)s'
+# custom formatter to include logger name instead of aws_request_id
+logging.getLogger().handlers[0].setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s.%(msecs)03dZ %(name)s %(message)s'))
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
