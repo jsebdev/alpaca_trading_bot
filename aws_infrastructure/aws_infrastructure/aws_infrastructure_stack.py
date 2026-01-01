@@ -65,7 +65,7 @@ class TradingBotStack(Stack):
                 # Bot Control
                 "DRY_RUN": os.environ.get("DRY_RUN", "true"),
                 "WATCHLIST": os.environ.get(
-                    "WATCHLIST", "AAPL,MSFT,GOOGL,AMZN,TSLA"
+                    "WATCHLIST", ""
                 ),
             },
             description="Alpaca paper trading bot with gap-down strategy",
