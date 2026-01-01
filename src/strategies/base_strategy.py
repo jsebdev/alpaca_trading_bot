@@ -11,6 +11,8 @@ from typing import Optional, List
 import logging
 
 
+logger = logging.getLogger(__name__)
+
 @dataclass
 class TradeSignal:
     """
@@ -41,14 +43,14 @@ class BaseStrategy(ABC):
     whether to trade a given symbol.
     """
 
-    def __init__(self, logger: logging.Logger):
-        """
-        Initialize the strategy.
-
-        Args:
-            logger: Logger instance for output
-        """
-        self.logger = logger
+    # def __init__(self, logger: logging.Logger):
+        # """
+        # Initialize the strategy.
+        #
+        # Args:
+        #     logger: Logger instance for output
+        # """
+        # self.logger = logger
 
     @abstractmethod
     def evaluate(
@@ -117,7 +119,7 @@ class BaseStrategy(ABC):
         remaining_cash = available_cash
 
         for symbol in symbols:
-            self.logger.info(f"Evaluating {symbol} (cash: ${remaining_cash:.2f})")
+            logger.info(f"Evaluating {symbol} (cash: ${remaining_cash:.2f})")
 
             try:
                 signal = self.evaluate(
@@ -132,15 +134,15 @@ class BaseStrategy(ABC):
                 # Update remaining cash if trade signal is positive
                 if signal.should_trade:
                     remaining_cash -= signal.notional
-                    self.logger.info(
+                    logger.info(
                         f"{symbol}: TRADE - {signal.reason} "
                         f"(allocating ${signal.notional:.2f})"
                     )
                 else:
-                    self.logger.info(f"{symbol}: SKIP - {signal.reason}")
+                    logger.info(f"{symbol}: SKIP - {signal.reason}")
 
             except Exception as e:
-                self.logger.error(
+                logger.error(
                     f"Error evaluating {symbol}: {e}",
                     exc_info=True,
                 )

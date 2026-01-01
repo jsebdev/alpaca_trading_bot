@@ -21,7 +21,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils import (
     Config,
-    setup_logger,
     AlpacaClientWrapper,
     MarketDataFetcher,
     OrderManager,
@@ -29,13 +28,13 @@ from utils import (
 from utils.order_manager import BracketOrderParams
 from strategies import BaseStrategy, SimpleGapDownStrategy, TradeSignal
 
+logger = logging.getLogger(__name__)
 
 class DayTradingBot:
     def __init__(
         self,
         config: Config,
         strategy: BaseStrategy,
-        logger: logging.Logger,
         dry_run: bool = False,
     ):
         """
@@ -44,27 +43,25 @@ class DayTradingBot:
         Args:
             config: Configuration object
             strategy: Trading strategy to use
-            logger: Logger instance
             dry_run: If True, simulate trades without placing real orders
         """
         self.config = config
         self.strategy = strategy
-        self.logger = logger
         self.dry_run = dry_run
 
         # Initialize Alpaca clients and utilities
-        self.alpaca_client = AlpacaClientWrapper(config, logger)
+        self.alpaca_client = AlpacaClientWrapper(config)
         self.market_data_fetcher = MarketDataFetcher(
-            self.alpaca_client.data_client, logger
+            self.alpaca_client.data_client
         )
         self.order_manager = OrderManager(
-            self.alpaca_client.trading_client, logger
+            self.alpaca_client.trading_client
         )
 
-        self.logger.info(f"Initialized DayTradingBot with {strategy.get_name()}")
-        self.logger.info(f"Strategy: {strategy.get_description()}")
-        self.logger.info(f"Watchlist: {', '.join(config.watchlist)}")
-        self.logger.info(f"Dry run mode: {dry_run}")
+        logger.info(f"Initialized DayTradingBot with {strategy.get_name()}")
+        logger.info(f"Strategy: {strategy.get_description()}")
+        logger.info(f"Watchlist: {', '.join(config.watchlist)}")
+        logger.info(f"Dry run mode: {dry_run}")
 
     def run(self) -> List[TradeSignal]:
         """
@@ -81,26 +78,26 @@ class DayTradingBot:
         Raises:
             Exception: If critical errors occur during execution
         """
-        self.logger.info("=" * 60)
-        self.logger.info(f"Starting bot run at {datetime.now()}")
-        self.logger.info("=" * 60)
+        logger.info("=" * 60)
+        logger.info(f"Starting bot run at {datetime.now()}")
+        logger.info("=" * 60)
 
         try:
             if not self.alpaca_client.is_tradeable():
-                self.logger.error("Account is not tradeable. Exiting.")
+                logger.error("Account is not tradeable. Exiting.")
                 return []
 
             account_summary = self.alpaca_client.get_account_summary()
             available_cash = account_summary["buying_power"]
 
             if available_cash <= 0:
-                self.logger.warning("No buying power available. Exiting.")
+                logger.warning("No buying power available. Exiting.")
                 return []
 
-            self.logger.info(f"Available buying power: ${available_cash:,.2f}")
+            logger.info(f"Available buying power: ${available_cash:,.2f}")
 
             # Step 2: Evaluate watchlist using strategy
-            self.logger.info(f"Evaluating {len(self.config.watchlist)} symbols...")
+            logger.info(f"Evaluating {len(self.config.watchlist)} symbols...")
 
             signals = self.strategy.evaluate_watchlist(
                 symbols=self.config.watchlist,
@@ -112,27 +109,27 @@ class DayTradingBot:
             trade_signals = [s for s in signals if s.should_trade]
 
             if not trade_signals:
-                self.logger.info("No trade signals generated. Exiting.")
+                logger.info("No trade signals generated. Exiting.")
                 return signals
 
-            self.logger.info(f"Generated {len(trade_signals)} trade signals")
+            logger.info(f"Generated {len(trade_signals)} trade signals")
 
             for signal in trade_signals:
                 self._execute_trade(signal)
 
             # Summary
-            self.logger.info("=" * 60)
-            self.logger.info("Bot run completed")
-            self.logger.info(
+            logger.info("=" * 60)
+            logger.info("Bot run completed")
+            logger.info(
                 f"Signals: {len(trade_signals)} trades, "
                 f"{len(signals) - len(trade_signals)} skips"
             )
-            self.logger.info("=" * 60)
+            logger.info("=" * 60)
 
             return signals
 
         except Exception as e:
-            self.logger.error(f"Critical error during bot run: {e}", exc_info=True)
+            logger.error(f"Critical error during bot run: {e}", exc_info=True)
             raise
 
     def _execute_trade(self, signal: TradeSignal) -> None:
@@ -163,7 +160,7 @@ class DayTradingBot:
                 )
 
         except Exception as e:
-            self.logger.error(
+            logger.error(
                 f"Failed to execute trade for {signal.symbol}: {e}",
                 exc_info=True,
             )
@@ -177,15 +174,6 @@ def main(dry_run: bool = False, watchlist: Optional[List[str]] = None):
         dry_run: If True, simulate trades without placing real orders
         watchlist: Optional custom watchlist. If None, uses default from config.
     """
-    # Setup logger
-    # In Lambda, skip file logging (CloudWatch captures stdout automatically)
-    # Otherwise, log to file for local debugging
-    log_file = None if os.environ.get("AWS_LAMBDA_FUNCTION_NAME") else "day_bot.log"
-    logger = setup_logger(
-        name="day_bot",
-        level=logging.INFO,
-        log_file=log_file,
-    )
 
     try:
         # Load configuration
@@ -196,14 +184,12 @@ def main(dry_run: bool = False, watchlist: Optional[List[str]] = None):
         strategy = SimpleGapDownStrategy(
             cash_allocation_percent=config.cash_allocation_percent,
             lookback_days=config.lookback_days,
-            logger=logger,
         )
 
         # Initialize and run bot
         bot = DayTradingBot(
             config=config,
             strategy=strategy,
-            logger=logger,
             dry_run=dry_run,
         )
 

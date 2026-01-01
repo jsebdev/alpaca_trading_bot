@@ -16,6 +16,9 @@ from alpaca.data.timeframe import TimeFrame
 from alpaca.common.exceptions import APIError
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class CandleData:
     """
@@ -51,7 +54,8 @@ class MarketDataFetcher:
     technical metrics like average candle size.
     """
 
-    def __init__(self, data_client: StockHistoricalDataClient, logger: logging.Logger):
+    # def __init__(self, data_client: StockHistoricalDataClient, logger: logging.Logger):
+    def __init__(self, data_client: StockHistoricalDataClient):
         """
         Initialize market data fetcher.
 
@@ -60,7 +64,7 @@ class MarketDataFetcher:
             logger: Logger instance
         """
         self.data_client = data_client
-        self.logger = logger
+        # self.logger = logger
 
     def get_historical_bars(
         self,
@@ -98,7 +102,7 @@ class MarketDataFetcher:
             bars = self.data_client.get_stock_bars(request)
 
             if symbol not in bars.data:
-                self.logger.warning(f"No bar data found for {symbol}")
+                logger.warning(f"No bar data found for {symbol}")
                 return []
 
             candles = [
@@ -116,7 +120,7 @@ class MarketDataFetcher:
             # Return only the requested number of most recent bars
             candles = candles[-days:] if len(candles) > days else candles
 
-            self.logger.debug(
+            logger.debug(
                 f"Fetched {len(candles)} bars for {symbol} "
                 f"(requested {days} days)"
             )
@@ -124,7 +128,7 @@ class MarketDataFetcher:
             return candles
 
         except APIError as e:
-            self.logger.error(f"Failed to fetch bars for {symbol}: {e}")
+            logger.error(f"Failed to fetch bars for {symbol}: {e}")
             raise
 
     def calculate_average_candle_size(
@@ -146,7 +150,7 @@ class MarketDataFetcher:
         candles = self.get_historical_bars(symbol, lookback_days)
 
         if len(candles) < lookback_days:
-            self.logger.warning(
+            logger.warning(
                 f"Insufficient data for {symbol}: "
                 f"got {len(candles)} bars, needed {lookback_days}"
             )
@@ -154,7 +158,7 @@ class MarketDataFetcher:
 
         avg_size = sum(c.candle_size for c in candles) / len(candles)
 
-        self.logger.debug(
+        logger.debug(
             f"{symbol} average candle size ({lookback_days} days): ${avg_size:.2f}"
         )
 
@@ -176,13 +180,13 @@ class MarketDataFetcher:
         candles = self.get_historical_bars(symbol, days=2)
 
         if len(candles) < 2:
-            self.logger.warning(f"Insufficient data to get previous close for {symbol}")
+            logger.warning(f"Insufficient data to get previous close for {symbol}")
             return None
 
         # Get the second-to-last candle (previous day)
         prev_close = candles[-2].close
 
-        self.logger.debug(f"{symbol} previous close: ${prev_close:.2f}")
+        logger.debug(f"{symbol} previous close: ${prev_close:.2f}")
 
         return prev_close
 
@@ -202,12 +206,12 @@ class MarketDataFetcher:
         candles = self.get_historical_bars(symbol, days=1)
 
         if not candles:
-            self.logger.warning(f"No price data available for {symbol}")
+            logger.warning(f"No price data available for {symbol}")
             return None
 
         current_price = candles[-1].close
 
-        self.logger.debug(f"{symbol} current price: ${current_price:.2f}")
+        logger.debug(f"{symbol} current price: ${current_price:.2f}")
 
         return current_price
 
@@ -234,7 +238,7 @@ class MarketDataFetcher:
         current_open = candles[-1].open
         gap_percent = ((current_open - prev_close) / prev_close) * 100
 
-        self.logger.debug(
+        logger.debug(
             f"{symbol} gap: prev_close=${prev_close:.2f}, "
             f"current_open=${current_open:.2f}, gap={gap_percent:.2f}%"
         )

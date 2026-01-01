@@ -1,12 +1,3 @@
-"""
-Simple gap-down trading strategy.
-
-This strategy:
-1. Only buys stocks that gap down (open < previous close)
-2. Allocates a fixed percentage of available cash per trade
-3. Sets take profit and stop loss based on average candle size
-"""
-
 import logging
 from typing import Optional
 
@@ -14,45 +5,22 @@ from .base_strategy import BaseStrategy, TradeSignal
 from utils.market_data import MarketDataFetcher
 
 
+logger = logging.getLogger(__name__)
+
+
 class SimpleGapDownStrategy(BaseStrategy):
-    """
-    Strategy that buys stocks gapping down with bracket orders.
-
-    Entry Criteria:
-    - Current open price < previous day's close price (gap down)
-
-    Position Sizing:
-    - Uses a fixed percentage of available cash per trade
-
-    Risk Management:
-    - Take profit = entry price + average candle size (last N days)
-    - Stop loss = entry price - average candle size (last N days)
-    """
-
     def __init__(
         self,
         cash_allocation_percent: float,
         lookback_days: int,
-        logger: logging.Logger,
     ):
-        """
-        Initialize the gap-down strategy.
-
-        Args:
-            cash_allocation_percent: Percentage of available cash to allocate (0-1)
-            lookback_days: Number of days for average candle size calculation
-            logger: Logger instance
-        """
-        super().__init__(logger)
         self.cash_allocation_percent = cash_allocation_percent
         self.lookback_days = lookback_days
 
     def get_name(self) -> str:
-        """Get strategy name."""
         return "Simple Gap-Down Strategy"
 
     def get_description(self) -> str:
-        """Get strategy description."""
         return (
             f"Buys stocks gapping down (open < prev close) with "
             f"{self.cash_allocation_percent*100:.1f}% cash allocation. "
@@ -66,20 +34,9 @@ class SimpleGapDownStrategy(BaseStrategy):
         market_data_fetcher: MarketDataFetcher,
         **kwargs,
     ) -> TradeSignal:
-        """
-        Evaluate whether to buy a symbol based on gap-down criteria.
-
-        Args:
-            symbol: Stock symbol to evaluate
-            available_cash: Current available cash
-            market_data_fetcher: Market data fetcher instance
-            **kwargs: Additional parameters (unused)
-
-        Returns:
-            TradeSignal with trade decision and parameters
-        """
-        # Calculate notional amount to invest
         notional = available_cash * self.cash_allocation_percent
+        logger.debug('>>>>> simple_strategy.py:83 "notional"')
+        logger.debug(notional)
 
         # Minimum trade size check
         if notional < 1.0:

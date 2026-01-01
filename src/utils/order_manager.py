@@ -16,6 +16,9 @@ from alpaca.trading.models import Order
 from alpaca.common.exceptions import APIError
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class BracketOrderParams:
     """
@@ -46,7 +49,8 @@ class OrderManager:
     parameters.
     """
 
-    def __init__(self, trading_client: TradingClient, logger: logging.Logger):
+    # def __init__(self, trading_client: TradingClient, logger: logging.Logger):
+    def __init__(self, trading_client: TradingClient):
         """
         Initialize order manager.
 
@@ -55,7 +59,7 @@ class OrderManager:
             logger: Logger instance
         """
         self.trading_client = trading_client
-        self.logger = logger
+        # self.logger = logger
 
     def place_bracket_order(
         self, params: BracketOrderParams, dry_run: bool = False
@@ -73,7 +77,7 @@ class OrderManager:
         Raises:
             APIError: If the API request fails (when not dry_run)
         """
-        self.logger.info(
+        logger.info(
             f"{'[DRY RUN] ' if dry_run else ''}Placing bracket order: "
             f"{params.symbol} ${params.notional:.2f} notional, "
             f"TP=${params.take_profit_price:.2f}, "
@@ -81,7 +85,7 @@ class OrderManager:
         )
 
         if dry_run:
-            self.logger.info("Dry run mode: order not placed")
+            logger.info("Dry run mode: order not placed")
             return None
 
         try:
@@ -98,7 +102,7 @@ class OrderManager:
 
             order = self.trading_client.submit_order(order_request)
 
-            self.logger.info(
+            logger.info(
                 f"Order placed successfully: {order.id} - "
                 f"{params.symbol} ${params.notional:.2f}"
             )
@@ -106,7 +110,7 @@ class OrderManager:
             return order
 
         except APIError as e:
-            self.logger.error(
+            logger.error(
                 f"Failed to place order for {params.symbol}: {e}",
                 exc_info=True,
             )
@@ -136,13 +140,13 @@ class OrderManager:
         Raises:
             APIError: If the API request fails (when not dry_run)
         """
-        self.logger.info(
+        logger.info(
             f"{'[DRY RUN] ' if dry_run else ''}Placing market order: "
             f"{symbol} ${notional:.2f} {side.value}"
         )
 
         if dry_run:
-            self.logger.info("Dry run mode: order not placed")
+            logger.info("Dry run mode: order not placed")
             return None
 
         try:
@@ -155,14 +159,14 @@ class OrderManager:
 
             order = self.trading_client.submit_order(order_request)
 
-            self.logger.info(
+            logger.info(
                 f"Order placed successfully: {order.id} - {symbol} ${notional:.2f}"
             )
 
             return order
 
         except APIError as e:
-            self.logger.error(
+            logger.error(
                 f"Failed to place order for {symbol}: {e}",
                 exc_info=True,
             )
@@ -183,10 +187,10 @@ class OrderManager:
         """
         try:
             order = self.trading_client.get_order_by_id(order_id)
-            self.logger.debug(f"Order {order_id} status: {order.status}")
+            logger.debug(f"Order {order_id} status: {order.status}")
             return order
         except APIError as e:
-            self.logger.error(f"Failed to get order status for {order_id}: {e}")
+            logger.error(f"Failed to get order status for {order_id}: {e}")
             raise
 
     def cancel_order(self, order_id: str) -> bool:
@@ -201,8 +205,8 @@ class OrderManager:
         """
         try:
             self.trading_client.cancel_order_by_id(order_id)
-            self.logger.info(f"Order {order_id} cancelled successfully")
+            logger.info(f"Order {order_id} cancelled successfully")
             return True
         except APIError as e:
-            self.logger.error(f"Failed to cancel order {order_id}: {e}")
+            logger.error(f"Failed to cancel order {order_id}: {e}")
             return False

@@ -15,6 +15,9 @@ from alpaca.common.exceptions import APIError
 from .config import Config
 
 
+logger = logging.getLogger(__name__)
+
+
 class AlpacaClientWrapper:
     """
     Wrapper around Alpaca's trading and data clients.
@@ -22,7 +25,8 @@ class AlpacaClientWrapper:
     Provides centralized client management with error handling and logging.
     """
 
-    def __init__(self, config: Config, logger: logging.Logger):
+    # def __init__(self, config: Config, logger: logging.Logger):
+    def __init__(self, config: Config):
         """
         Initialize Alpaca clients.
 
@@ -31,7 +35,7 @@ class AlpacaClientWrapper:
             logger: Logger instance for output
         """
         self.config = config
-        self.logger = logger
+        # self.logger = logger
 
         self.trading_client = TradingClient(
             api_key=config.alpaca_api_key,
@@ -44,7 +48,7 @@ class AlpacaClientWrapper:
             secret_key=config.alpaca_api_secret,
         )
 
-        self.logger.info(
+        logger.info(
             f"Initialized Alpaca clients (paper_trading={config.paper_trading})"
         )
 
@@ -60,10 +64,10 @@ class AlpacaClientWrapper:
         """
         try:
             account = self.trading_client.get_account()
-            self.logger.debug(f"Account status: {account.status}")
+            logger.debug(f"Account status: {account.status}")
             return account
         except APIError as e:
-            self.logger.error(f"Failed to get account info: {e}")
+            logger.error(f"Failed to get account info: {e}")
             raise
 
     def get_buying_power(self) -> float:
@@ -79,11 +83,11 @@ class AlpacaClientWrapper:
         account = self.get_account()
 
         if account.trading_blocked:
-            self.logger.warning("Account is restricted from trading")
+            logger.warning("Account is restricted from trading")
             return 0.0
 
         buying_power = float(account.buying_power)
-        self.logger.info(f"Available buying power: ${buying_power:,.2f}")
+        logger.info(f"Available buying power: ${buying_power:,.2f}")
         return buying_power
 
     def is_tradeable(self) -> bool:
@@ -120,5 +124,5 @@ class AlpacaClientWrapper:
             "account_status": account.status,
         }
 
-        self.logger.info(f"Account summary: {summary}")
+        logger.info(f"Account summary: {summary}")
         return summary

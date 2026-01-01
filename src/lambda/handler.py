@@ -9,6 +9,7 @@ import os
 import sys
 import json
 import logging
+import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dataclasses import asdict
@@ -19,11 +20,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 # Import bot after path modification
 from bots.day_bot import main as run_bot
 from strategies.base_strategy import TradeSignal
+from utils.logger import setup_logger
 
-# Set up logging for CloudWatch
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
+logging.basicConfig(level=logging.DEBUG) # this only works in local, lambda already has a handler attached to root logger
+logging.getLogger().setLevel(logging.DEBUG) # set root logger level to INFO in lambda, by default it's WARNING
+logger = logging.getLogger(__name__)
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
@@ -97,7 +98,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
         logger.info(f"Execution completed: {summary}")
-        logger.info("=" * 60)
+        logger.info("=" * 60 + "\n\n")
 
         # Return structured response
         return {
@@ -159,3 +160,13 @@ def _parse_watchlist(event: Dict[str, Any]) -> Optional[List[str]]:
 
     # Return None to use Config default
     return None
+
+if __name__ == "__main__":
+    # For local testing
+    test_event = {
+        "dry_run": True,
+        "watchlist": ["AAPL"]
+    }
+    response = lambda_handler(test_event, None)
+    logger.info('>>>>> handler.py:171 "response"')
+    logger.info(response)
