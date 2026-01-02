@@ -94,6 +94,7 @@ class MarketDataFetcher:
                 timeframe=timeframe,
                 start=start,
                 end=end,
+                feed='iex',  # Use free IEX feed instead of SIP to avoid subscription restrictions
             )
 
             bars = self.data_client.get_stock_bars(request)
@@ -155,7 +156,7 @@ class MarketDataFetcher:
 
         avg_size = sum(c.candle_size for c in candles) / len(candles)
 
-        logger.debug(
+        logger.info(
             f"{symbol} average candle size ({lookback_days} days): ${avg_size:.2f}"
         )
 
@@ -183,7 +184,7 @@ class MarketDataFetcher:
         # Get the second-to-last candle (previous day)
         prev_close = candles[-2].close
 
-        logger.debug(f"{symbol} previous close: ${prev_close:.2f}")
+        logger.info(f"{symbol} previous close: ${prev_close:.2f}")
 
         return prev_close
 
@@ -208,7 +209,7 @@ class MarketDataFetcher:
 
         current_price = candles[-1].close
 
-        logger.debug(f"{symbol} current price: ${current_price:.2f}")
+        logger.info(f"{symbol} current price: ${current_price:.2f}")
 
         return current_price
 
@@ -235,7 +236,7 @@ class MarketDataFetcher:
         current_open = candles[-1].open
         gap_percent = ((current_open - prev_close) / prev_close) * 100
 
-        logger.debug(
+        logger.info(
             f"{symbol} gap: prev_close=${prev_close:.2f}, "
             f"current_open=${current_open:.2f}, gap={gap_percent:.2f}%"
         )
