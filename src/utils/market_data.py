@@ -54,17 +54,14 @@ class MarketDataFetcher:
     technical metrics like average candle size.
     """
 
-    # def __init__(self, data_client: StockHistoricalDataClient, logger: logging.Logger):
     def __init__(self, data_client: StockHistoricalDataClient):
         """
         Initialize market data fetcher.
 
         Args:
             data_client: Alpaca data client instance
-            logger: Logger instance
         """
         self.data_client = data_client
-        # self.logger = logger
 
     def get_historical_bars(
         self,
@@ -120,7 +117,7 @@ class MarketDataFetcher:
             # Return only the requested number of most recent bars
             candles = candles[-days:] if len(candles) > days else candles
 
-            logger.debug(
+            logger.info(
                 f"Fetched {len(candles)} bars for {symbol} "
                 f"(requested {days} days)"
             )

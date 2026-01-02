@@ -9,10 +9,10 @@ import os
 import sys
 import json
 import logging
-import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dataclasses import asdict
+
 
 # Add bot_package to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -20,15 +20,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 # Import bot after path modification
 from bots.day_bot import main as run_bot
 from strategies.base_strategy import TradeSignal
-from utils.logger import setup_logger
+from utils.setup_logging import setup_logging
 
-logging.basicConfig(level=logging.DEBUG) # this only works in local, lambda already has a handler attached to root logger
-logging.getLogger().setLevel(logging.DEBUG) # set root logger level in lambda, by default it's WARNING
+
+setup_logging()
 logger = logging.getLogger(__name__)
 
-# default lambda logging format: '[%(levelname)s] %(asctime)s.%(msecs)03dZ %(aws_request_id)s %(message)s'
-# custom formatter to include logger name instead of aws_request_id
-logging.getLogger().handlers[0].setFormatter(logging.Formatter('[%(levelname)s] %(asctime)s.%(msecs)03dZ %(name)s %(message)s'))
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
