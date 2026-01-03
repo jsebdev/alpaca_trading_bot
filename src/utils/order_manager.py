@@ -79,9 +79,9 @@ class OrderManager:
         """
         logger.info(
             f"{'[DRY RUN] ' if dry_run else ''}Placing bracket order: "
-            f"{params.symbol} ${params.notional:.2f} notional, "
-            f"TP=${params.take_profit_price:.2f}, "
-            f"SL=${params.stop_loss_price:.2f}"
+            f"{params.symbol} ${params.notional} notional, "
+            f"TP=${params.take_profit_price}, "
+            f"SL=${params.stop_loss_price}"
         )
 
         if dry_run:
@@ -104,7 +104,7 @@ class OrderManager:
 
             logger.info(
                 f"Order placed successfully: {order.id} - "
-                f"{params.symbol} ${params.notional:.2f}"
+                f"{params.symbol} ${params.notional}"
             )
 
             return order
@@ -142,7 +142,7 @@ class OrderManager:
         """
         logger.info(
             f"{'[DRY RUN] ' if dry_run else ''}Placing market order: "
-            f"{symbol} ${notional:.2f} {side.value}"
+            f"{symbol} ${notional} {side.value}"
         )
 
         if dry_run:
@@ -160,7 +160,7 @@ class OrderManager:
             order = self.trading_client.submit_order(order_request)
 
             logger.info(
-                f"Order placed successfully: {order.id} - {symbol} ${notional:.2f}"
+                f"Order placed successfully: {order.id} - {symbol} ${notional}"
             )
 
             return order

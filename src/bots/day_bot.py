@@ -94,7 +94,7 @@ class DayTradingBot:
                 logger.warning("No buying power available. Exiting.")
                 return []
 
-            logger.info(f"Available buying power: ${available_cash:,.2f}")
+            logger.info(f"Available buying power: ${available_cash}")
 
             # Step 2: Evaluate watchlist using strategy
             logger.info(f"Evaluating {len(self.config.watchlist)} symbols...")

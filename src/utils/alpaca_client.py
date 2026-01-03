@@ -87,7 +87,7 @@ class AlpacaClientWrapper:
             return 0.0
 
         buying_power = float(account.buying_power)
-        logger.info(f"Available buying power: ${buying_power:,.2f}")
+        logger.info(f"Available buying power: ${buying_power}")
         return buying_power
 
     def is_tradeable(self) -> bool:

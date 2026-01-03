@@ -71,7 +71,7 @@ class MomentumStrategy(BaseStrategy):
             return TradeSignal(
                 symbol=symbol,
                 should_trade=False,
-                reason=f"Momentum {gain_percent:.2f}% < {self.min_gain_percent}%",
+                reason=f"Momentum {gain_percent}% < {self.min_gain_percent}%",
             )
 
         # Calculate position size (5% of available cash)
@@ -94,7 +94,7 @@ class MomentumStrategy(BaseStrategy):
             notional=notional,
             take_profit_price=take_profit,
             stop_loss_price=stop_loss,
-            reason=f"Strong momentum: {gain_percent:.2f}% over {self.lookback_days} days",
+            reason=f"Strong momentum: {gain_percent}% over {self.lookback_days} days",
         )
 
 
@@ -144,7 +144,7 @@ class ConservativeStrategy(BaseStrategy):
             return TradeSignal(
                 symbol=symbol,
                 should_trade=False,
-                reason=f"Too volatile: {avg_volatility:.2f}% > {self.max_volatility}%",
+                reason=f"Too volatile: {avg_volatility}% > {self.max_volatility}%",
             )
 
         # Conservative position sizing: only 3% of cash
@@ -157,7 +157,7 @@ class ConservativeStrategy(BaseStrategy):
             notional=notional,
             take_profit_price=current_price * 1.03,  # 3% gain target
             stop_loss_price=current_price * 0.98,    # 2% stop loss
-            reason=f"Low volatility: {avg_volatility:.2f}%",
+            reason=f"Low volatility: {avg_volatility}%",
         )
 
 

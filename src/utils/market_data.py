@@ -157,7 +157,7 @@ class MarketDataFetcher:
         avg_size = sum(c.candle_size for c in candles) / len(candles)
 
         logger.info(
-            f"{symbol} average candle size ({lookback_days} days): ${avg_size:.2f}"
+            f"{symbol} average candle size ({lookback_days} days): ${avg_size}"
         )
 
         return avg_size
@@ -184,7 +184,7 @@ class MarketDataFetcher:
         # Get the second-to-last candle (previous day)
         prev_close = candles[-2].close
 
-        logger.info(f"{symbol} previous close: ${prev_close:.2f}")
+        logger.info(f"{symbol} previous close: ${prev_close}")
 
         return prev_close
 
@@ -209,7 +209,7 @@ class MarketDataFetcher:
 
         current_price = candles[-1].close
 
-        logger.info(f"{symbol} current price: ${current_price:.2f}")
+        logger.info(f"{symbol} current price: ${current_price}")
 
         return current_price
 
@@ -237,8 +237,8 @@ class MarketDataFetcher:
         gap_percent = ((current_open - prev_close) / prev_close) * 100
 
         logger.info(
-            f"{symbol} gap: prev_close=${prev_close:.2f}, "
-            f"current_open=${current_open:.2f}, gap={gap_percent:.2f}%"
+            f"{symbol} gap: prev_close=${prev_close}, "
+            f"current_open=${current_open}, gap={gap_percent}%"
         )
 
         return prev_close, current_open, gap_percent

@@ -23,7 +23,7 @@ class SimpleGapDownStrategy(BaseStrategy):
     def get_description(self) -> str:
         return (
             f"Buys stocks gapping down (open < prev close) with "
-            f"{self.cash_allocation_percent*100:.1f}% cash allocation. "
+            f"{self.cash_allocation_percent*100}% cash allocation. "
             f"TP/SL based on {self.lookback_days}-day average candle size."
         )
 
@@ -43,7 +43,7 @@ class SimpleGapDownStrategy(BaseStrategy):
             return TradeSignal(
                 symbol=symbol,
                 should_trade=False,
-                reason=f"Insufficient cash (${available_cash:.2f})",
+                reason=f"Insufficient cash (${available_cash})",
             )
 
         # Get gap information
@@ -63,7 +63,7 @@ class SimpleGapDownStrategy(BaseStrategy):
             return TradeSignal(
                 symbol=symbol,
                 should_trade=False,
-                reason=f"No gap down (open=${current_open:.2f} >= prev_close=${prev_close:.2f})",
+                reason=f"No gap down (open=${current_open} >= prev_close=${prev_close})",
             )
 
         # Calculate average candle size for TP/SL
@@ -94,9 +94,9 @@ class SimpleGapDownStrategy(BaseStrategy):
             take_profit_price=take_profit_price,
             stop_loss_price=stop_loss_price,
             reason=(
-                f"Gap down {gap_percent:.2f}% "
-                f"(open=${current_open:.2f}, prev_close=${prev_close:.2f}), "
-                f"avg_candle=${avg_candle_size:.2f}, "
-                f"TP=${take_profit_price:.2f}, SL=${stop_loss_price:.2f}"
+                f"Gap down {gap_percent}% "
+                f"(open=${current_open}, prev_close=${prev_close}), "
+                f"avg_candle=${avg_candle_size}, "
+                f"TP=${take_profit_price}, SL=${stop_loss_price}"
             ),
         )

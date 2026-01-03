@@ -119,7 +119,7 @@ class BaseStrategy(ABC):
         remaining_cash = available_cash
 
         for symbol in symbols:
-            logger.info(f"Evaluating {symbol} (cash: ${remaining_cash:.2f})")
+            logger.info(f"Evaluating {symbol} (cash: ${remaining_cash})")
 
             try:
                 signal = self.evaluate(
@@ -136,7 +136,7 @@ class BaseStrategy(ABC):
                     remaining_cash -= signal.notional
                     logger.info(
                         f"{symbol}: TRADE - {signal.reason} "
-                        f"(allocating ${signal.notional:.2f})"
+                        f"(allocating ${signal.notional})"
                     )
                 else:
                     logger.info(f"{symbol}: SKIP - {signal.reason}")
