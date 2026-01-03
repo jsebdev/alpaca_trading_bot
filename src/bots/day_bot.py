@@ -144,7 +144,7 @@ class DayTradingBot:
             if signal.take_profit_price and signal.stop_loss_price:
                 params = BracketOrderParams(
                     symbol=signal.symbol,
-                    notional=signal.notional,
+                    notional=round(signal.notional, 2),
                     take_profit_price=signal.take_profit_price,
                     stop_loss_price=signal.stop_loss_price,
                 )
