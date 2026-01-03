@@ -28,48 +28,6 @@ logger = logging.getLogger(__name__)
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    AWS Lambda handler for Alpaca trading bot.
-
-    Event Structure (optional overrides):
-    {
-        "dry_run": true/false,
-        "watchlist": ["AAPL", "TSLA", "NVDA"]
-    }
-
-    Environment Variables:
-    - ALPACA_API_KEY (required)
-    - ALPACA_API_SECRET (required)
-    - PAPER_TRADING (optional, default: "true")
-    - DRY_RUN (optional, default: "true")
-    - CASH_ALLOCATION_PERCENT (optional, default: "0.05")
-    - LOOKBACK_DAYS (optional, default: "5")
-    - WATCHLIST (optional, comma-separated symbols)
-
-    Returns:
-    {
-        "statusCode": 200,
-        "body": {
-            "execution_time": "2025-12-21T14:30:00Z",
-            "dry_run": true,
-            "signals": [
-                {
-                    "symbol": "AAPL",
-                    "should_trade": true,
-                    "notional": 5000.0,
-                    "take_profit_price": 150.5,
-                    "stop_loss_price": 145.2,
-                    "reason": "Gap down detected: -2.3%"
-                }
-            ],
-            "summary": {
-                "total_symbols": 5,
-                "trades": 3,
-                "skips": 2
-            }
-        }
-    }
-    """
     execution_time = datetime.utcnow().isoformat() + "Z"
 
     logger.info("=" * 60)
@@ -85,7 +43,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.info(f"Configuration: dry_run={dry_run}, watchlist={watchlist}")
 
         # Run the trading bot
-        signals: List[TradeSignal] = run_bot(dry_run=dry_run, watchlist=watchlist)
+        signals: List[TradeSignal] = run_bot(watchlist=watchlist, dry_run=dry_run)
 
         # Convert TradeSignal dataclasses to dicts
         signals_dict = [asdict(signal) for signal in signals]
@@ -101,8 +59,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.info(f"Execution completed: {summary}")
         logger.info("=" * 60 + "\n\n")
 
-        # Return structured response
-        return {
+        response = {
             "statusCode": 200,
             "body": {
                 "execution_time": execution_time,
@@ -116,7 +73,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.error(f"Lambda execution failed: {str(e)}", exc_info=True)
         logger.error("=" * 60)
 
-        return {
+        response = {
             "statusCode": 500,
             "body": {
                 "execution_time": execution_time,
@@ -124,6 +81,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "error_type": type(e).__name__,
             }
         }
+    logger.info("final response:")
+    logger.info(response)
+    return response
 
 
 def _parse_dry_run(event: Dict[str, Any]) -> bool:
@@ -135,6 +95,7 @@ def _parse_dry_run(event: Dict[str, Any]) -> bool:
     # Event takes precedence over environment
     if "dry_run" in event:
         return bool(event["dry_run"])
+    return False
 
     # Fall back to environment variable
     return os.environ.get("DRY_RUN", "true").lower() == "true"
@@ -165,7 +126,7 @@ def _parse_watchlist(event: Dict[str, Any]) -> Optional[List[str]]:
 if __name__ == "__main__":
     # For local testing
     test_event = {
-        "dry_run": True,
+        "dry_run": False,
         "watchlist": ["AAPL"]
     }
     response = lambda_handler(test_event, None)

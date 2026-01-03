@@ -13,18 +13,6 @@ from dotenv import load_dotenv
 
 @dataclass
 class Config:
-    """
-    Configuration container for trading bot.
-
-    Attributes:
-        alpaca_api_key: Alpaca API key
-        alpaca_api_secret: Alpaca API secret
-        paper_trading: Whether to use paper trading (default: True)
-        watchlist: List of stock symbols to monitor
-        cash_allocation_percent: Percentage of available cash to allocate per trade
-        lookback_days: Number of days to look back for candle size calculation
-    """
-
     alpaca_api_key: str
     alpaca_api_secret: str
     paper_trading: bool = True
@@ -33,20 +21,7 @@ class Config:
     lookback_days: int = 5
 
     @classmethod
-    def from_env(cls, watchlist: List[str] = None) -> "Config":
-        """
-        Load configuration from environment variables.
-
-        Args:
-            watchlist: Optional list of stock symbols. If not provided,
-                      defaults to AAPL, MSFT, GOOGL, AMZN, TSLA
-
-        Returns:
-            Config instance with loaded values
-
-        Raises:
-            ValueError: If required environment variables are missing
-        """
+    def from_env(cls, watchlist: List[str]) -> "Config":
         load_dotenv()
 
         api_key = os.getenv("ALPACA_API_KEY")
@@ -57,13 +32,11 @@ class Config:
                 "ALPACA_API_KEY and ALPACA_API_SECRET must be set in .env file"
             )
 
-        default_watchlist = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
-
         return cls(
             alpaca_api_key=api_key,
             alpaca_api_secret=api_secret,
             paper_trading=os.getenv("PAPER_TRADING", "true").lower() == "true",
-            watchlist=watchlist or default_watchlist,
+            watchlist=watchlist,
             cash_allocation_percent=float(
                 os.getenv("CASH_ALLOCATION_PERCENT", "0.05")
             ),

@@ -166,15 +166,7 @@ class DayTradingBot:
             )
 
 
-def main(dry_run: bool = False, watchlist: Optional[List[str]] = None):
-    """
-    Main entry point for the day trading bot.
-
-    Args:
-        dry_run: If True, simulate trades without placing real orders
-        watchlist: Optional custom watchlist. If None, uses default from config.
-    """
-
+def main(watchlist: List[str], dry_run: bool = False):
     try:
         # Load configuration
         config = Config.from_env(watchlist=watchlist)
